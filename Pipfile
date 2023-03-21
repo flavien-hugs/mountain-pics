@@ -8,11 +8,12 @@ flask = "*"
 flask-sqlalchemy = "*"
 psycopg2-binary = "*"
 flask-restx = "*"
-geoip2 = "*"
 flask-httpauth = "*"
 python-dotenv = "*"
 flask-migrate = "*"
 flask-cors = "*"
+requests = "*"
+folium = "*"
 
 [dev-packages]
 
