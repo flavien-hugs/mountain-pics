@@ -1,5 +1,4 @@
 import os
-from datetime import timedelta
 
 DATABASE_URL='postgresql://mountain:mountain@localhost/mountain_pics_db'
 
@@ -16,7 +15,9 @@ class Config:
     SQLALCHEMY_ECHO = False
 
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
-    TOKEN_EXPIRATION = timedelta(days=1)
+
+    RESTX_VALIDATE = True
+    HTTPAUTH_ENABLED = True
 
     @staticmethod
     def init_app(mountain_app):

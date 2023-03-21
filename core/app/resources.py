@@ -2,44 +2,27 @@ from flask_restx import fields
 from app import api
 
 
-peak_create_fields = api.model(
-    "PeakCreate",
+pic_fields = api.model(
+    "Pic",
     {
-        "id": fields.Integer(readonly=True, description="Peak id"),
+        "id": fields.Integer(readonly=True, description="Pic id"),
         "name": fields.String(
-            required=True, description="Peak name"
+            required=True, description="The pic name"
         ),
         "latitude": fields.String(
-            required=True, description="Peak latitude"
+            required=True, description="The pic latitude"
         ),
         "longitude": fields.String(
-            required=True, description="Peak latitude"
+            required=True, description="The pi latitude"
         ),
         "altitude": fields.String(
-            required=True, description="Peak altitude"
-        ),
-    },
-)
-
-
-peak_fields = api.model(
-    "Peak",
-    {
-        "id": fields.Integer(readonly=True, description="Peak id"),
-        "name": fields.String(
-            required=True, description="Peak name"
-        ),
-        "latitude": fields.Float(
-            required=True, description="Peak latitude"
-        ),
-        "longitude": fields.Float(
-            required=True, description="Peak latitude"
-        ),
-        "altitude": fields.Float(
-            required=True, description="Peak altitude"
+            required=True, description="The pic altitude"
         ),
         "created_at": fields.DateTime(
-            required=True, description="Peak created date"
+            readonly=True, description="The pic created date"
+        ),
+        "updated_at": fields.DateTime(
+            readonly=True, description="The pic updated date"
         ),
     },
 )

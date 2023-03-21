@@ -5,7 +5,9 @@ from flask_restx import Api
 from sqlalchemy import MetaData
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from flask_httpauth import HTTPTokenAuth
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 from app.config import config
 
@@ -19,16 +21,25 @@ metadata = MetaData(
     }
 )
 
+users = {
+    "admin": generate_password_hash("admin"),
+}
+
 cors = CORS()
 migrate = Migrate()
-auth = HTTPTokenAuth('Bearer')
+auth = HTTPBasicAuth()
 db = SQLAlchemy(metadata=metadata)
 
 api = Api(
     version="1.0",
-    title="Mountain Pic API",
-    description="A Mountain Pic API",
+    title="Mountain API",
+    description="API to store and retrieve mountains data"
 )
+
+@auth.verify_password
+def verify_password(username, password):
+    if username in users and check_password_hash(users.get(username), password):
+        return username
 
 def create_mountain_app(config_name):
 
@@ -43,7 +54,7 @@ def create_mountain_app(config_name):
 
     with mountain_app.app_context():
 
-        from app.views import peak_ns
+        from app.views import pic_ns
 
         if not mountain_app.debug:
             if not os.path.exists("logs"):

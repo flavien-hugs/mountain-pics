@@ -3,10 +3,10 @@ from datetime import datetime
 from app import db
 
 
-class Peak(db.Model):
+class Pic(db.Model):
 
     id = db.Column(db.Integer, index=True, primary_key=True)
-    name = db.Column(db.String(225), nullable=False)
+    name = db.Column(db.String(225), unique=True, nullable=False)
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
     altitude = db.Column(db.Float, nullable=False)
@@ -20,17 +20,7 @@ class Peak(db.Model):
         return f"{self.name} - {self.latitude} - {self.longitude} "
 
     def __repr__(self):
-        return f"Peak({self.id}, {self.name})"
-
-    @classmethod
-    def create(cls, **kwargs):
-        instance = cls(**kwargs)
-        return instance.save()
-
-    def update(self, commit=True, **kwargs):
-        for attr, value in kwargs.iteritems():
-            setattr(self, attr, value)
-        return commit and self.save() or self
+        return f"Pic({self.id}, {self.name})"
 
     def save(self, commit=True):
         db.session.add(self)
@@ -43,13 +33,10 @@ class Peak(db.Model):
         return commit and db.session.commit()
 
     def to_json(self):
-
-        data = {
+        return {
             "id": self.id,
             "name": self.name,
             "latitude": self.latitude,
             "longitude": self.longitude,
             "altitude": self.altitude
         }
-
-        return data
