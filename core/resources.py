@@ -1,5 +1,5 @@
 from flask_restx import fields
-from app import api
+from core import api
 
 
 pic_fields = api.model(

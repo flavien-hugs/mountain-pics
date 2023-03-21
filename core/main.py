@@ -6,7 +6,7 @@ import requests
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from app.models import Pic
+from core.models import Pic
 
 main_bp = Blueprint("main_bp", __name__, url_prefix="/")
 

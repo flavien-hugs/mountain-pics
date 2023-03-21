@@ -1,15 +1,12 @@
-from flask import Flask
+from flask import Flask, redirect, url_for
 
 from flask_cors import CORS
 from flask_restx import Api
 from sqlalchemy import MetaData
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from flask_httpauth import HTTPBasicAuth
-from werkzeug.security import generate_password_hash, check_password_hash
 
-
-from app.config import config
+from core.config import config
 
 metadata = MetaData(
     naming_convention={
@@ -21,25 +18,15 @@ metadata = MetaData(
     }
 )
 
-users = {
-    "admin": generate_password_hash("admin"),
-}
-
 cors = CORS()
 migrate = Migrate()
-auth = HTTPBasicAuth()
 db = SQLAlchemy(metadata=metadata)
 
 api = Api(
-    version="1.0",
+    doc="/api/",
     title="Mountain API",
     description="API to store and retrieve mountains data"
 )
-
-@auth.verify_password
-def verify_password(username, password):
-    if username in users and check_password_hash(users.get(username), password):
-        return username
 
 def create_mountain_app(config_name):
 
@@ -54,7 +41,13 @@ def create_mountain_app(config_name):
 
     with mountain_app.app_context():
 
-        from app.views import pic_ns
+        from core.apis.pics import pic_ns
+        from core.main import main_bp
+        mountain_app.register_blueprint(main_bp)
+
+        @mountain_app.route("/")
+        def entrypoint():
+            return redirect(url_for("main_bp.map_view"))
 
         if not mountain_app.debug:
             if not os.path.exists("logs"):

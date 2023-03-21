@@ -2,12 +2,15 @@ from datetime import timedelta
 from http import HTTPStatus
 
 from flask import jsonify
-from flask import request
+from flask import abort
+from flask import request, current_app
 
 from flask_restx import Resource
-from app import api, auth, db
-from app.models import Pic
-from app.resources import pic_fields, geo_bounding_box
+from core import api, db
+from core.models import Pic
+from core.resources import pic_fields, geo_bounding_box
+
+from core.utils import get_country_code
 
 
 pic_ns = api.namespace(
@@ -21,37 +24,43 @@ def abort_if_pic_doesnt_exist(id):
             {"success": True, "message": f"Could not find pic with that {id}"}
         )
 
+
+def check_access_endpoint():
+    country = get_country_code()
+    if country not in current_app.config['ALLOWED_COUNTRIES']:
+        abort(HTTPStatus.FORBIDDEN, 'Access denied')
+
+
 @pic_ns.route('/')
 class PicList(Resource):
     @pic_ns.doc(
         responses={
+            int(HTTPStatus.FORBIDDEN): "Access denied",
             int(HTTPStatus.NOT_FOUND): "Pics not found",
         }
     )
     def get(self):
         """endpoint to read all pics"""
 
-        page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("per_page", 5, type=int)
+        check_access_endpoint()
 
-        pics = Pic.query.order_by(Pic.created_at.desc()).paginate(
-            page=page, per_page=per_page, error_out=False
-        )
-        return jsonify({"pics": [pic.to_json() for pic in pics.items]})
+        pics = Pic.query.all()
+        return [pic.to_json() for pic in pics]
 
 
     @pic_ns.doc(
         responses={
-            int(HTTPStatus.UNAUTHORIZED): "User logged required",
+            int(HTTPStatus.FORBIDDEN): "Access denied",
             int(HTTPStatus.CREATED): "New pic created successfully",
         },
         body=pic_fields
     )
-    @auth.login_required
     @pic_ns.expect(pic_fields)
     def post(self):
 
         """endpoint to create a pic"""
+
+        check_access_endpoint()
 
         data = request.json
 
@@ -80,6 +89,8 @@ class PicDetail(Resource):
         endpoint to retrieve a pic by id
         """
 
+        check_access_endpoint()
+
         pic = Pic.query.get(pic_id)
         if not pic:
             abort_if_pic_doesnt_exist(id)
@@ -94,11 +105,11 @@ class PicDetail(Resource):
         body=pic_fields
     )
     @pic_ns.expect(pic_fields)
-    @auth.login_required
     def patch(self, pic_id):
 
         """endpoint to update a peak by id"""
 
+        check_access_endpoint()
         abort_if_pic_doesnt_exist(pic_id)
 
         data = request.json
@@ -109,7 +120,7 @@ class PicDetail(Resource):
         pic.altitude = data.get("altitude")
         pic.save()
 
-        return jsonify({"pic": pic.to_json()}), HTTPStatus.CREATED
+        return pic.to_json(), HTTPStatus.CREATED
 
     @pic_ns.doc(
         responses={
@@ -118,10 +129,11 @@ class PicDetail(Resource):
             int(HTTPStatus.OK): "Pic deleted successfully",
         },
     )
-    @auth.login_required
     def delete(self, pic_id):
 
         """endpoint to delete a pic by id"""
+
+        check_access_endpoint()
 
         pic = Pic.query.get(id=pic_id)
         if not need:
@@ -129,16 +141,11 @@ class PicDetail(Resource):
 
         pic.remove()
 
-        page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("per_page", 5, type=int)
-
-        pics = Pic.query.order_by(Pic.created_at.desc()).paginate(
-            page=page, per_page=per_page, error_out=False
-        )
+        pics = Pic.query.all()
 
         return jsonify({
             "message": "Pic deleted successfully",
-            "pics": [pic.to_json() for pic in pics.items]
+            "pics": [pic.to_json() for pic in pics]
         }), HTTPStatus.OK
 
 
@@ -150,6 +157,7 @@ class PicsList(Resource):
 
         '''List all pics in a given location'''
 
+        check_access_endpoint()
         data = request.json
 
         latitude = float(data.get('latitude'))
@@ -171,4 +179,4 @@ class PicsList(Resource):
 
         pics = Pic.query.filter(distance_between <= radius).all()
 
-        return jsonify({"pics": [pic.to_json() for pic in pics]})
+        return [pic.to_json() for pic in pics]

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app import db
+from core import db
 
 
 class Pic(db.Model):
