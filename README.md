@@ -45,4 +45,5 @@ make build
 ### Finished
 You should now be up and running!
 
-* The web app is running on  http://localhost:5000
+* The web app is running on  http://localhost:5000/map/
+* The api docs is running on  http://localhost:5000/api/
