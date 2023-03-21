@@ -19,6 +19,8 @@ class Config:
     RESTX_VALIDATE = True
     HTTPAUTH_ENABLED = True
 
+    ALLOWED_COUNTRIES = ['Fr', 'US', 'CI']
+
     @staticmethod
     def init_app(mountain_app):
         pass
