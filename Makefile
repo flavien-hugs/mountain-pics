@@ -8,7 +8,7 @@ freeze: ## Pin current dependencies
 	pipenv requirements > requirements.txt
 
 build: ## build app
-	docker-compose up -d --build --remove-orphans
+	docker-compose up -d --build
 
 up: ## docker up
 	docker-compose up
