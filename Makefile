@@ -4,25 +4,35 @@ MANAGE := FLASK_APP=./core/run.py
 help: ## Show this help
 	@egrep -h '\s##\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: venv
-venv: ## Make a new virtual environment
-	pipenv shell
-
-.PHONY: install
-install: venv ## Install or update dependencies
-	pipenv install
-
 freeze: ## Pin current dependencies
-	pipenv requirements > ./core/requirements.txt
+	pipenv requirements > requirements.txt
 
-initdb: ## Init and create database
-	$(MANAGE) flask db init && $(MANAGE) flask init_db
+build: ## build app
+	docker-compose up -d --build --remove-orphans
 
-migrate: ## Generate an migration
-	$(MANAGE) flask db migrate -m 'Intial Migration'
+up: ## docker up
+	docker-compose up
 
-upgrade: ## Apply the upgrade to the database
-	$(MANAGE) flask db upgrade
+down: ## docker down
+	docker-compose down
 
-shell: ## Flask Shell Load
-	$(MANAGE) flask shell
+down_v: ## docker down volume
+	docker-compose down -v
+
+docker-initdb: ## Init and create database
+	docker-compose exec app $(MANAGE) flask db init && $(MANAGE) flask init_db
+
+docker-migrate-db:  ## Generate an migration
+	docker-compose exec app $(MANAGE) flask db migrate -m 'Intial Migration'
+
+docker-upgrade-db: ## Apply the upgrade to the database
+	docker-compose exec app $(MANAGE) flask db upgrade
+
+docker-shell: ## Flask Shell Load
+	docker-compose exec app $(MANAGE) flask shell
+
+prune:
+	docker system prune
+
+enter_app:
+	docker exec -it run bash
