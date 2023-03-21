@@ -5,9 +5,9 @@ from flask import jsonify
 from flask import request
 
 from flask_restx import Resource
-from app import api, auth
+from app import api, auth, db
 from app.models import Pic
-from app.resources import pic_fields
+from app.resources import pic_fields, geo_bounding_box
 
 
 pic_ns = api.namespace(
@@ -37,7 +37,7 @@ class PicList(Resource):
         pics = Pic.query.order_by(Pic.created_at.desc()).paginate(
             page=page, per_page=per_page, error_out=False
         )
-        return [pic.to_json() for pic in pics.items]
+        return jsonify({"pics": [pic.to_json() for pic in pics.items]})
 
 
     @pic_ns.doc(
@@ -109,16 +109,7 @@ class PicDetail(Resource):
         pic.altitude = data.get("altitude")
         pic.save()
 
-        return (
-            jsonify(
-                {
-                    "success": True,
-                    "message": "Pic update successfully",
-                    "pic": pic.to_json(),
-                }
-            ),
-            HTTPStatus.CREATED
-        )
+        return jsonify({"pic": pic.to_json()}), HTTPStatus.CREATED
 
     @pic_ns.doc(
         responses={
@@ -145,13 +136,39 @@ class PicDetail(Resource):
             page=page, per_page=per_page, error_out=False
         )
 
-        return (
-            jsonify(
-                {
-                    "success": True,
-                    "message": "Pic deleted successfully",
-                    "pics": [pic.to_json() for pic in pics.items],
-                }
-            ),
-            HTTPStatus.OK,
-        )
+        return jsonify({
+            "message": "Pic deleted successfully",
+            "pics": [pic.to_json() for pic in pics.items]
+        }), HTTPStatus.OK
+
+
+@pic_ns.route('/location')
+class PicsList(Resource):
+    @pic_ns.expect(geo_bounding_box)
+    @pic_ns.doc('geo_bounding_box')
+    def post(self):
+
+        '''List all pics in a given location'''
+
+        data = request.json
+
+        latitude = float(data.get('latitude'))
+        longitude = float(data.get('longitude'))
+        radius = float(data.get('radius'))
+
+        # db.func.cast() pour extraire les valeurs
+        # de Pic.latitude et Pic.longitude en tant que flottants,
+
+        pic_latitude = db.func.cast(Pic.latitude, db.Float)
+        pic_longitude = db.func.cast(Pic.longitude, db.Float)
+
+        # Utilisation de db.func.power() pour élever chaque terme au carré
+        sqrt_lat = db.func.power(latitude - pic_latitude, 2)
+        sqrt_lon = db.func.power(longitude - pic_longitude, 2)
+
+        # db.func.sqrt() pour calculer de la distance entre les points .
+        distance_between = db.func.sqrt(sqrt_lat + sqrt_lon)
+
+        pics = Pic.query.filter(distance_between <= radius).all()
+
+        return jsonify({"pics": [pic.to_json() for pic in pics]})
