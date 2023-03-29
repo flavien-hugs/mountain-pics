@@ -1,34 +1,23 @@
 from datetime import timedelta
+
+from flask import abort, jsonify, request, current_app
+
 from http import HTTPStatus
-
-from flask import jsonify
-from flask import abort
-from flask import request, current_app
-
 from flask_restx import Resource
-from core import api, db
-from core.models import Pic
-from core.resources import pic_fields, geo_bounding_box
+from core import db
 
-from core.utils import get_country_code
+from . import api
+from core.app.models import Pic
+from core.apis.resources import pic_fields, geo_bounding_box
 
-
-pic_ns = api.namespace(
-    "pics", version="1.0",
-    description="A namespace for operation pic"
-)
-
-def abort_if_pic_doesnt_exist(id):
-    if id not in Pic.query.all():
-        return jsonify(
-            {"success": True, "message": f"Could not find pic with that {id}"}
-        )
+pic_ns = api.namespace('pics', description="A namespace for operation pics")
 
 
-def check_access_endpoint():
-    country = get_country_code()
-    if country not in current_app.config['ALLOWED_COUNTRIES']:
-        abort(HTTPStatus.FORBIDDEN, 'Access denied')
+def abort_if_pic_doesnt_exist(pic_id: int) -> Pic:
+    pic = Pic.query.get(pic_id)
+    if not pic:
+        abort(HTTPStatus.NOT_FOUND, f"Could not find pic with id {pic_id}")
+    return pic
 
 
 @pic_ns.route('/')
@@ -40,9 +29,10 @@ class PicList(Resource):
         }
     )
     def get(self):
-        """endpoint to read all pics"""
 
-        check_access_endpoint()
+        """
+        endpoint to read all pics
+        """
 
         pics = Pic.query.all()
         return [pic.to_json() for pic in pics]
@@ -58,11 +48,15 @@ class PicList(Resource):
     @pic_ns.expect(pic_fields)
     def post(self):
 
-        """endpoint to create a pic"""
-
-        check_access_endpoint()
+        """
+        endpoint to create a pic
+        """
 
         data = request.json
+
+        # Validate input data
+        if not all(key in data for key in ['name', 'latitude', 'longitude', 'altitude']):
+            return jsonify({"error": "Invalid input data"}), HTTPStatus.BAD_REQUEST
 
         new_pic = Pic(
             name=data.get("name"),
@@ -72,8 +66,11 @@ class PicList(Resource):
         )
         new_pic.save()
 
-        response = new_pic.to_json()
-        return response, HTTPStatus.CREATED
+        response_data = {
+            "message": "New pic created successfully",
+            "pic": new_pic.to_json()
+        }
+        return jsonify(response_data), HTTPStatus.CREATED
 
 
 @pic_ns.route("/<int:pic_id>/")
@@ -85,15 +82,13 @@ class PicDetail(Resource):
         }
     )
     def get(self, pic_id):
+
         """
         endpoint to retrieve a pic by id
         """
 
-        check_access_endpoint()
+        pic = abort_if_pic_doesnt_exist(pic_id)
 
-        pic = Pic.query.get(pic_id)
-        if not pic:
-            abort_if_pic_doesnt_exist(id)
         return pic.to_json()
 
     @pic_ns.doc(
@@ -107,20 +102,20 @@ class PicDetail(Resource):
     @pic_ns.expect(pic_fields)
     def patch(self, pic_id):
 
-        """endpoint to update a peak by id"""
-
-        check_access_endpoint()
-        abort_if_pic_doesnt_exist(pic_id)
+        """
+        endpoint to update a peak by id
+        """
 
         data = request.json
-        pic = Pic.query.get(pic_id)
+        pic = abort_if_pic_doesnt_exist(pic_id)
+
         pic.name = data.get("name")
         pic.latitude = data.get("latitude")
         pic.longitude = data.get("longitude")
         pic.altitude = data.get("altitude")
         pic.save()
 
-        return pic.to_json(), HTTPStatus.CREATED
+        return pic.to_json(), HTTPStatus.OK
 
     @pic_ns.doc(
         responses={
@@ -131,38 +126,39 @@ class PicDetail(Resource):
     )
     def delete(self, pic_id):
 
-        """endpoint to delete a pic by id"""
+        """
+        endpoint to delete a pic by id
+        """
 
-        check_access_endpoint()
-
-        pic = Pic.query.get(id=pic_id)
-        if not need:
-            abort_if_pic_doesnt_exist(pic_id)
+        pic = abort_if_pic_doesnt_exist(pic_id)
 
         pic.remove()
 
         pics = Pic.query.all()
 
-        return jsonify({
+        response_data = {
             "message": "Pic deleted successfully",
             "pics": [pic.to_json() for pic in pics]
-        }), HTTPStatus.OK
+        }
+
+        return response_data, HTTPStatus.OK
 
 
 @pic_ns.route('/location')
 class PicsList(Resource):
+
     @pic_ns.expect(geo_bounding_box)
     @pic_ns.doc('geo_bounding_box')
     def post(self):
 
-        '''List all pics in a given location'''
+        '''
+        List all pics in a given location
+        '''
 
-        check_access_endpoint()
         data = request.json
 
-        latitude = float(data.get('latitude'))
-        longitude = float(data.get('longitude'))
-        radius = float(data.get('radius'))
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
 
         # db.func.cast() pour extraire les valeurs
         # de Pic.latitude et Pic.longitude en tant que flottants,
@@ -177,6 +173,6 @@ class PicsList(Resource):
         # db.func.sqrt() pour calculer de la distance entre les points .
         distance_between = db.func.sqrt(sqrt_lat + sqrt_lon)
 
-        pics = Pic.query.filter(distance_between <= radius).all()
+        pics = Pic.query.filter(distance_between).all()
 
         return [pic.to_json() for pic in pics]

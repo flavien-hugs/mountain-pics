@@ -1,7 +1,8 @@
-from flask import Flask, redirect, url_for
+from http import HTTPStatus
+
+from flask import Flask, abort, redirect, url_for
 
 from flask_cors import CORS
-from flask_restx import Api
 from sqlalchemy import MetaData
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -22,11 +23,6 @@ cors = CORS()
 migrate = Migrate()
 db = SQLAlchemy(metadata=metadata)
 
-api = Api(
-    doc="/api/",
-    title="Mountain API",
-    description="API to store and retrieve mountains data"
-)
 
 def create_mountain_app(config_name):
 
@@ -34,15 +30,19 @@ def create_mountain_app(config_name):
     mountain_app.config.from_object(config[config_name])
     config[config_name].init_app(mountain_app)
 
-    api.init_app(mountain_app)
-    migrate.init_app(mountain_app, db)
-    db.init_app(mountain_app)
+    mountain_app.url_map.strict_slashes = False
+
     cors.init_app(mountain_app, origins="*", supports_credentials=True)
+
+    db.init_app(mountain_app)
+    migrate.init_app(mountain_app, db)
 
     with mountain_app.app_context():
 
-        from core.apis.pics import pic_ns
-        from core.main import main_bp
+        from core.apis import api_bp
+        from core.app import main_bp
+
+        mountain_app.register_blueprint(api_bp)
         mountain_app.register_blueprint(main_bp)
 
         @mountain_app.route("/")

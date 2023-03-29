@@ -1,6 +1,12 @@
 import os
+from dotenv import dotenv_values
 
-DATABASE_URL='postgresql://mountain:mountain@localhost/mountain_pics_db'
+env = dotenv_values(".flaskenv")
+
+DATABASE_URI = env.get("DATABASE_URL")
+
+if DATABASE_URI.startswith("postgres://"):
+    DATABASE_URI = DATABASE_URI.replace("postgres://", "postgresql://", 1)
 
 class Config:
 
@@ -14,12 +20,12 @@ class Config:
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_ECHO = False
 
-    SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    SQLALCHEMY_DATABASE_URI = DATABASE_URI
 
     RESTX_VALIDATE = True
     HTTPAUTH_ENABLED = True
 
-    ALLOWED_COUNTRIES = ['Fr', 'US', 'CI']
+    ALLOWED_COUNTRIES = ['FR', 'US', 'CI']
 
     @staticmethod
     def init_app(mountain_app):

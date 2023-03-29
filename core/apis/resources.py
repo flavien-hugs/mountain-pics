@@ -1,5 +1,5 @@
 from flask_restx import fields
-from core import api
+from . import api
 
 
 pic_fields = api.model(
@@ -26,6 +26,5 @@ geo_bounding_box = api.model(
     {
         'latitude': fields.Float(required=True, description='Latitude'),
         'longitude': fields.Float(required=True, description='Longitude'),
-        'radius': fields.Float(required=True, description='Radius in kilometers'),
     },
 )
