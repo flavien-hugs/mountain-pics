@@ -11,6 +11,7 @@ if DATABASE_URI.startswith("postgres://"):
 class Config:
 
     DEBUG = False
+    TESTING = False
     DEVELOPMENT = False
 
     SITE_NAME = "Mountain Pic"
@@ -37,6 +38,10 @@ class DevConfig(Config):
     DEBUG = True
     DEVELOPMENT = True
 
+class TestConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+
 class ProdConfig(Config):
 
     @classmethod
@@ -47,4 +52,5 @@ class ProdConfig(Config):
 config = {
     "dev": DevConfig,
     "prod": ProdConfig,
+    "test": TestConfig
 }
