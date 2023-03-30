@@ -4,17 +4,18 @@ from flask import abort, jsonify, request, current_app
 
 from http import HTTPStatus
 from flask_restx import Resource
-from core import db
 
 from . import api
+
+from core import db
 from core.app.models import Pic
-from core.apis.resources import pic_fields, geo_bounding_box
+from core.apis.resources import pic_fields
 
 pic_ns = api.namespace('pics', description="A namespace for operation pics")
 
 
 def abort_if_pic_doesnt_exist(pic_id: int) -> Pic:
-    pic = Pic.query.get(pic_id)
+    pic = Pic.query.filter_by(id=pic_id).first()
     if not pic:
         abort(HTTPStatus.NOT_FOUND, f"Could not find pic with id {pic_id}")
     return pic
@@ -28,6 +29,7 @@ class PicList(Resource):
             int(HTTPStatus.NOT_FOUND): "Pics not found",
         }
     )
+    @pic_ns.marshal_list_with(pic_fields)
     def get(self):
 
         """
@@ -42,8 +44,7 @@ class PicList(Resource):
         responses={
             int(HTTPStatus.FORBIDDEN): "Access denied",
             int(HTTPStatus.CREATED): "New pic created successfully",
-        },
-        body=pic_fields
+        }
     )
     @pic_ns.expect(pic_fields)
     def post(self):
@@ -81,6 +82,7 @@ class PicDetail(Resource):
             int(HTTPStatus.NOT_FOUND): "Pic not found",
         }
     )
+    @pic_ns.marshal_with(pic_fields)
     def get(self, pic_id):
 
         """
@@ -97,7 +99,6 @@ class PicDetail(Resource):
             int(HTTPStatus.NOT_FOUND): "Pic not found",
             int(HTTPStatus.OK): "Pic updated successfully",
         },
-        body=pic_fields
     )
     @pic_ns.expect(pic_fields)
     def patch(self, pic_id):
@@ -144,35 +145,34 @@ class PicDetail(Resource):
         return response_data, HTTPStatus.OK
 
 
-@pic_ns.route('/location')
-class PicsList(Resource):
+@pic_ns.route('/<float:min_lat>/<float:max_lat>/<float:min_lon>/<float:max_lon>/')
+@pic_ns.doc(params={
+    'min_lat': 'Minimum latitude',
+    'max_lat': 'Maximum latitude',
+    'min_lon': 'Minimum longitude',
+    'max_lon': 'Maximum longitude'
+})
+class SearchPics(Resource):
 
-    @pic_ns.expect(geo_bounding_box)
-    @pic_ns.doc('geo_bounding_box')
-    def post(self):
+    @pic_ns.doc(
+        responses={
+            int(HTTPStatus.FORBIDDEN): "Access denied",
+            int(HTTPStatus.NOT_FOUND): "Pics not found",
+        }
+    )
+    @pic_ns.marshal_with(pic_fields, as_list=True)
+    def get(self, min_lat, max_lat, min_lon, max_lon):
 
-        '''
-        List all pics in a given location
-        '''
+        try:
+            pics = Pic.query.filter(
+                Pic.latitude >= min_lat,
+                Pic.latitude <= max_lat,
+                Pic.longitude >= min_lon,
+                Pic.longitude <= max_lon
+            ).all()
+            if not pics:
+                return {'message': 'Pics not found'}, HTTPStatus.NOT_FOUND
+            return [pic.to_json() for pic in pics]
 
-        data = request.json
-
-        latitude = data.get('latitude')
-        longitude = data.get('longitude')
-
-        # db.func.cast() pour extraire les valeurs
-        # de Pic.latitude et Pic.longitude en tant que flottants,
-
-        pic_latitude = db.func.cast(Pic.latitude, db.Float)
-        pic_longitude = db.func.cast(Pic.longitude, db.Float)
-
-        # Utilisation de db.func.power() pour élever chaque terme au carré
-        sqrt_lat = db.func.power(latitude - pic_latitude, 2)
-        sqrt_lon = db.func.power(longitude - pic_longitude, 2)
-
-        # db.func.sqrt() pour calculer de la distance entre les points .
-        distance_between = db.func.sqrt(sqrt_lat + sqrt_lon)
-
-        pics = Pic.query.filter(distance_between).all()
-
-        return [pic.to_json() for pic in pics]
+        except db.exc.SQLAlchemyError:
+            return {'message': 'Internal server error'}, HTTPStatus.INTERNAL_SERVER_ERROR
