@@ -21,10 +21,3 @@ pic_fields = api.model(
     },
 )
 
-geo_bounding_box = api.model(
-    'Location',
-    {
-        'latitude': fields.Float(required=True, description='Latitude'),
-        'longitude': fields.Float(required=True, description='Longitude'),
-    },
-)
