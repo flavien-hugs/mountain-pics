@@ -16,6 +16,7 @@ class Pic(db.Model):
         onupdate=datetime.utcnow()
     )
 
+
     def __str__(self) -> str:
         return f"{self.name} - {self.latitude} - {self.longitude} "
 

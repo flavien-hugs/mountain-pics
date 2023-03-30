@@ -25,6 +25,12 @@ def verify_password(username, password):
         return username
 
 
+@main_bp.get('/admin/')
+@auth.login_required
+def dashboard():
+    return "Hello, %s!" % auth.current_user()
+
+
 @main_bp.before_app_request
 def check_access_endpoint():
     country = get_country_code()
@@ -37,8 +43,14 @@ def check_access_endpoint():
 def map_view():
 
     api_url = request.url_root
-    req_url = api_url + "api/pics"
-    pics_response = requests.get(req_url).json()
+    req_url = api_url + "api/pics/"
+
+    try:
+        response = requests.get(req_url)
+        response.raise_for_status()
+        pics_response = response.json()
+    except requests.exceptions.RequestException as e:
+        return "Error fetching pics data"
 
     map = folium.Map(zoom_start=13)
     for pic in pics_response:
@@ -55,9 +67,3 @@ def map_view():
 
     map_html = map.get_root().render()
     return map_html
-
-
-@main_bp.get('/admin/')
-@auth.login_required
-def dashboard():
-    return "Hello, %s!" % auth.current_user()
