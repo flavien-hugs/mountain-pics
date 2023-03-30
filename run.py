@@ -2,18 +2,16 @@ import logging as lg
 import os
 import json
 
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 from flask_migrate import Migrate
 from flask_migrate import upgrade
 
 from core import db, create_mountain_app
-from core.models import Pic
+from core.app.models import Pic
 
-dotenv_path = os.path.join(os.path.dirname(__file__), ".flaskenv")
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path)
+env = dotenv_values(".flaskenv")
 
-mountain_app = create_mountain_app(os.getenv("FLASK_CONFIG") or "dev")
+mountain_app = create_mountain_app(env.get("FLASK_CONFIG") or "dev")
 migrate = Migrate(mountain_app, db, render_as_batch=True)
 
 @mountain_app.shell_context_processor
@@ -30,4 +28,4 @@ def init_db():
 
 
 if __name__ == "__main__":
-    mountain_app.run()
+    mountain_app.run(port=5000, host="0.0.0.0")
