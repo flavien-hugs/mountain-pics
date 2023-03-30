@@ -25,10 +25,10 @@ def verify_password(username, password):
         return username
 
 
-# @main_bp.before_app_request
+@main_bp.before_app_request
 def check_access_endpoint():
     country = get_country_code()
-    allowed_countries = current_app.config.get['ALLOWED_COUNTRIES']
+    allowed_countries = current_app.config['ALLOWED_COUNTRIES']
     if country not in allowed_countries:
         abort(HTTPStatus.FORBIDDEN, 'Access denied')
 
