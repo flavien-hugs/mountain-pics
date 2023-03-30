@@ -14,6 +14,7 @@ flask-migrate = "*"
 flask-cors = "*"
 requests = "*"
 folium = "*"
+httpx = "*"
 
 [dev-packages]
 
