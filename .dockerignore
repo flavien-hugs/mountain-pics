@@ -1,0 +1,14 @@
+*.log
+*.tmp
+README.md
+.gitignore
+.Makefile
+Pipfile
+Pipfile.lock
+screenshort.png
+
+migrations
+
+.git/
+.vscode/
+__pycache__/
