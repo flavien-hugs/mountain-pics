@@ -1,4 +1,5 @@
 flask
+httpx
 flask-sqlalchemy
 psycopg2-binary
 flask-restx
@@ -8,3 +9,4 @@ flask-migrate
 flask-cors
 requests
 folium
+httpx
