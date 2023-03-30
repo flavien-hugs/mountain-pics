@@ -70,7 +70,7 @@ class PicList(Resource):
             "message": "New pic created successfully",
             "pic": new_pic.to_json()
         }
-        return jsonify(response_data), HTTPStatus.CREATED
+        return response_data, HTTPStatus.CREATED
 
 
 @pic_ns.route("/<int:pic_id>/")

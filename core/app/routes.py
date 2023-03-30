@@ -43,8 +43,8 @@ def map_view():
     map = folium.Map(zoom_start=13)
     for pic in pics_response:
 
-        location = [pic.get('latitude'), pic.get('longitude')]
-        name = pic.get('name')
+        location = [pic.get('longitude'), pic.get('latitude')]
+        name = f"{pic.get('name')} ({pic.get('altitude')} Km)"
 
         if location[0] is not None and location[1] is not None:
             folium.Marker(
