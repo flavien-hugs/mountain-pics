@@ -12,10 +12,8 @@ class Pic(db.Model):
     altitude = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime(), default=datetime.utcnow())
     updated_at = db.Column(
-        db.DateTime(), default=datetime.utcnow(),
-        onupdate=datetime.utcnow()
+        db.DateTime(), default=datetime.utcnow(), onupdate=datetime.utcnow()
     )
-
 
     def __str__(self) -> str:
         return f"{self.name} - {self.latitude} - {self.longitude} "
@@ -39,5 +37,5 @@ class Pic(db.Model):
             "name": self.name,
             "latitude": self.latitude,
             "longitude": self.longitude,
-            "altitude": self.altitude
+            "altitude": self.altitude,
         }

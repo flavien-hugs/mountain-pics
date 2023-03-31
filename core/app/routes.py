@@ -1,15 +1,16 @@
-from flask import request, current_app, abort
+from http import HTTPStatus
 
 import folium
 import requests
-
-from http import HTTPStatus
+from core.app.utils import get_country_code
+from flask import abort
+from flask import current_app
+from flask import request
 from flask_httpauth import HTTPBasicAuth
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash
 
 from . import main_bp
-from core.app.models import Pic
-from core.app.utils import get_country_code
 
 
 auth = HTTPBasicAuth()
@@ -25,7 +26,7 @@ def verify_password(username, password):
         return username
 
 
-@main_bp.get('/admin/')
+@main_bp.get("/admin/")
 @auth.login_required
 def dashboard():
     return "Hello, %s!" % auth.current_user()
@@ -34,9 +35,9 @@ def dashboard():
 @main_bp.before_app_request
 def check_access_endpoint():
     country = get_country_code()
-    allowed_countries = current_app.config['ALLOWED_COUNTRIES']
+    allowed_countries = current_app.config["ALLOWED_COUNTRIES"]
     if country not in allowed_countries:
-        abort(HTTPStatus.FORBIDDEN, 'Access denied')
+        abort(HTTPStatus.FORBIDDEN, "Access denied")
 
 
 @main_bp.route("/map/")
@@ -50,12 +51,12 @@ def map_view():
         response.raise_for_status()
         pics_response = response.json()
     except requests.exceptions.RequestException as e:
-        return "Error fetching pics data"
+        return f"Error fetching pics data {e}"
 
     map = folium.Map(zoom_start=13)
     for pic in pics_response:
 
-        location = [pic.get('longitude'), pic.get('latitude')]
+        location = [pic.get("longitude"), pic.get("latitude")]
         name = f"{pic.get('name')} ({pic.get('altitude')} Km)"
 
         if location[0] is not None and location[1] is not None:

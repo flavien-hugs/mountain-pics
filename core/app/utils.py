@@ -1,5 +1,6 @@
-import httpx
 import logging
+
+import httpx
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -7,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 def get_address_ip():
     try:
-        url = 'https://api64.ipify.org?format=json'
+        url = "https://api64.ipify.org?format=json"
         with httpx.Client() as client:
             response_data = client.get(url).json()
 

@@ -1,17 +1,16 @@
-from datetime import timedelta
-
-from flask import abort, jsonify, request, current_app
-
 from http import HTTPStatus
+
+from core import db
+from core.apis.resources import pic_fields
+from core.app.models import Pic
+from flask import abort
+from flask import jsonify
+from flask import request
 from flask_restx import Resource
 
 from . import api
 
-from core import db
-from core.app.models import Pic
-from core.apis.resources import pic_fields
-
-pic_ns = api.namespace('pics', description="A namespace for operation pics")
+pic_ns = api.namespace("pics", description="A namespace for operation pics")
 
 
 def abort_if_pic_doesnt_exist(pic_id: int) -> Pic:
@@ -21,7 +20,7 @@ def abort_if_pic_doesnt_exist(pic_id: int) -> Pic:
     return pic
 
 
-@pic_ns.route('/')
+@pic_ns.route("/")
 class PicList(Resource):
     @pic_ns.doc(
         responses={
@@ -39,7 +38,6 @@ class PicList(Resource):
         pics = Pic.query.all()
         return [pic.to_json() for pic in pics]
 
-
     @pic_ns.doc(
         responses={
             int(HTTPStatus.FORBIDDEN): "Access denied",
@@ -56,27 +54,28 @@ class PicList(Resource):
         data = request.json
 
         # Validate input data
-        if not all(key in data for key in ['name', 'latitude', 'longitude', 'altitude']):
+        if not all(
+            key in data for key in ["name", "latitude", "longitude", "altitude"]
+        ):
             return jsonify({"error": "Invalid input data"}), HTTPStatus.BAD_REQUEST
 
         new_pic = Pic(
             name=data.get("name"),
             latitude=data.get("latitude"),
             longitude=data.get("longitude"),
-            altitude=data.get("altitude")
+            altitude=data.get("altitude"),
         )
         new_pic.save()
 
         response_data = {
             "message": "New pic created successfully",
-            "pic": new_pic.to_json()
+            "pic": new_pic.to_json(),
         }
         return response_data, HTTPStatus.CREATED
 
 
 @pic_ns.route("/<int:pic_id>/")
 class PicDetail(Resource):
-
     @pic_ns.doc(
         responses={
             int(HTTPStatus.NOT_FOUND): "Pic not found",
@@ -139,21 +138,22 @@ class PicDetail(Resource):
 
         response_data = {
             "message": "Pic deleted successfully",
-            "pics": [pic.to_json() for pic in pics]
+            "pics": [pic.to_json() for pic in pics],
         }
 
         return response_data, HTTPStatus.OK
 
 
-@pic_ns.route('/<float:min_lat>/<float:max_lat>/<float:min_lon>/<float:max_lon>/')
-@pic_ns.doc(params={
-    'min_lat': 'Minimum latitude',
-    'max_lat': 'Maximum latitude',
-    'min_lon': 'Minimum longitude',
-    'max_lon': 'Maximum longitude'
-})
+@pic_ns.route("/<float:min_lat>/<float:max_lat>/<float:min_lon>/<float:max_lon>/")
+@pic_ns.doc(
+    params={
+        "min_lat": "Minimum latitude",
+        "max_lat": "Maximum latitude",
+        "min_lon": "Minimum longitude",
+        "max_lon": "Maximum longitude",
+    }
+)
 class SearchPics(Resource):
-
     @pic_ns.doc(
         responses={
             int(HTTPStatus.FORBIDDEN): "Access denied",
@@ -168,11 +168,13 @@ class SearchPics(Resource):
                 Pic.latitude >= min_lat,
                 Pic.latitude <= max_lat,
                 Pic.longitude >= min_lon,
-                Pic.longitude <= max_lon
+                Pic.longitude <= max_lon,
             ).all()
             if not pics:
-                return {'message': 'Pics not found'}, HTTPStatus.NOT_FOUND
+                return {"message": "Pics not found"}, HTTPStatus.NOT_FOUND
             return [pic.to_json() for pic in pics]
 
         except db.exc.SQLAlchemyError:
-            return {'message': 'Internal server error'}, HTTPStatus.INTERNAL_SERVER_ERROR
+            return {
+                "message": "Internal server error"
+            }, HTTPStatus.INTERNAL_SERVER_ERROR

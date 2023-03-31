@@ -1,15 +1,15 @@
-import os
 import logging
+import os
 from logging.handlers import RotatingFileHandler
 
-from flask import Flask, redirect, url_for
-
+from core.config import config
+from flask import Flask
+from flask import redirect
+from flask import url_for
 from flask_cors import CORS
-from sqlalchemy import MetaData
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-
-from core.config import config
+from sqlalchemy import MetaData
 
 metadata = MetaData(
     naming_convention={

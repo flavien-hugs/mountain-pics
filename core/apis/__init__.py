@@ -4,10 +4,11 @@ from flask_restx import Api
 api_bp = Blueprint("api_bp", __name__, url_prefix="/api/")
 
 api = Api(
-    api_bp, version="1.0",
+    api_bp,
+    version="1.0",
     title="Mountain API",
     ordered=True,
-    description="API to store and retrieve mountains data"
+    description="API to store and retrieve mountains data",
 )
 
-from . import pics
+from . import pics  # noqa
