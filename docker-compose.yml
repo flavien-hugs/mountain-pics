@@ -1,36 +1,32 @@
-version: '3.9'
+version: '3'
 
 services:
-  db:
-    image: postgres:latest
-    volumes:
-      - mountain-db:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: mountain_pics_user
-      POSTGRES_PASSWORD: mountain_pics_pwd
-      POSTGRES_DB: mountain_pics_db
-    expose:
-      - "5432:5432"
   app:
+    container_name: app
     build: .
+    ports:
+      - "5000:5000"
     links:
       - db:db
     environment:
-      FLASK_CONFIG: dev
-      DATABASE_URL: postgresql://mountain_pics_user:mountain_pics_pwd@db:5432/mountain_pics_db
+      - FLASK_CONFIG=dev
+      - DATABASE_URL=postgresql://mountain:mountain@db:5432/mountain_pics_db
     volumes:
       - .:/app
     depends_on:
       - db
-    ports:
-      - "5000:5000"
-    entrypoint: ["run", "flask", "init_db"]
-    healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:5000/healthcheck || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+
+  db:
+    container_name: db
+    image: postgres:12
+    expose:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - mountain-db:/var/lib/postgresql/data
 
 volumes:
-  mountain-db:
+  mountain-db: {}
