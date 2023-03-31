@@ -1,18 +1,17 @@
 import logging as lg
-import os
-import json
 
+from core import create_mountain_app
+from core import db
+from core.app.models import Pic
 from dotenv import dotenv_values
 from flask_migrate import Migrate
 from flask_migrate import upgrade
-
-from core import db, create_mountain_app
-from core.app.models import Pic
 
 env = dotenv_values(".flaskenv")
 
 mountain_app = create_mountain_app(env.get("FLASK_CONFIG") or "dev")
 migrate = Migrate(mountain_app, db, render_as_batch=True)
+
 
 @mountain_app.shell_context_processor
 def make_shell_context():
