@@ -1,14 +1,17 @@
 import sys
-sys.path.append('..')
-from flask import current_app
-from core import db, create_mountain_app
-
 import unittest
 
-class BaseCase(unittest.TestCase):
+from core import create_mountain_app
+from core import db
+from flask import current_app
 
+
+sys.path.append("..")
+
+
+class BaseCase(unittest.TestCase):
     def setUp(self):
-        self.app = create_mountain_app('test')
+        self.app = create_mountain_app("test")
         self.app_context = self.app.app_context()
         self.app_context.push()
         db.create_all()
@@ -23,8 +26,8 @@ class BaseCase(unittest.TestCase):
         self.assertFalse(current_app is None)
 
     def test_app_is_testing(self):
-        self.assertTrue(current_app.config['TESTING'])
+        self.assertTrue(current_app.config["TESTING"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
