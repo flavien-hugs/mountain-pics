@@ -1,7 +1,7 @@
 .PHONY: init migrate upgrade
 
 start: ## dockoer compose init
-	docker-compose up -d
+	docker-compose up
 	docker-compose run app sh -c "flask db init && flask init_db"
 
 
