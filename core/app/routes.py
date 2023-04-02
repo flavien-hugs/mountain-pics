@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 import folium
-import requests
+import httpx
 from core.app.utils import get_country_code
 from flask import abort
 from flask import current_app
@@ -47,24 +47,33 @@ def map_view():
     req_url = api_url + "api/pics/"
 
     try:
-        response = requests.get(req_url)
-        response.raise_for_status()
-        pics_response = response.json()
-    except requests.exceptions.RequestException as e:
-        return f"Error fetching pics data {e}"
+        with httpx.Client() as client:
+            pics_response = client.get(req_url).json()
+    except (httpx.RequestError, ValueError) as error:
+        logger.debug(f"Error fetching pics data {error}")
+        return "Error fetching pics data"
 
-    map = folium.Map(zoom_start=13)
-    for pic in pics_response:
+    if not pics_response:
+        map = folium.Map(zoom_start=10)
+    else:
+        map = folium.Map(
+            location=[
+                pics_response[0]["longitude"],
+                pics_response[0]["latitude"]
+            ],
+            zoom_start=10
+        )
+        for pic in pics_response:
 
-        location = [pic.get("longitude"), pic.get("latitude")]
-        name = f"{pic.get('name')} ({pic.get('altitude')} Km)"
+            location = [pic.get("longitude"), pic.get("latitude")]
+            name = f"{pic.get('name')} ({pic.get('altitude')} Km)"
 
-        if location[0] is not None and location[1] is not None:
             folium.Marker(
                 location=location,
                 popup=folium.Popup(name, parse_html=True),
                 icon=folium.Icon(color="red", icon="info-sign"),
             ).add_to(map)
+
 
     map_html = map.get_root().render()
     return map_html
