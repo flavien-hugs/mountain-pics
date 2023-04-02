@@ -7,6 +7,5 @@ flask-httpauth
 python-dotenv
 flask-migrate
 flask-cors
-requests
 folium
 httpx
