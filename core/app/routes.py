@@ -1,4 +1,6 @@
+import logging
 from http import HTTPStatus
+from urllib.parse import urlparse
 
 import folium
 import httpx
@@ -12,6 +14,8 @@ from werkzeug.security import generate_password_hash
 
 from . import main_bp
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 auth = HTTPBasicAuth()
 

@@ -133,15 +133,7 @@ class PicDetail(Resource):
         pic = abort_if_pic_doesnt_exist(pic_id)
 
         pic.remove()
-
-        pics = Pic.query.all()
-
-        response_data = {
-            "message": "Pic deleted successfully",
-            "pics": [pic.to_json() for pic in pics],
-        }
-
-        return response_data, HTTPStatus.OK
+        return response_data, HTTPStatus.NOT_CONTENT
 
 
 @pic_ns.route("/<float:min_lat>/<float:max_lat>/<float:min_lon>/<float:max_lon>/")
