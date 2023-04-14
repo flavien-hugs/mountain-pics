@@ -77,7 +77,7 @@ class TestPics(BaseCase):
         # Check that the pic exists before deletion
         self.assertIsNotNone(abort_if_pic_doesnt_exist(pic.id))
         response = self.client.delete(f"api/pics/{pic.id}/")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
 
         # Check that the pic was actually deleted
         response = self.client.delete(f"api/pics/{pic.id}/")
